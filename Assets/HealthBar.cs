@@ -9,6 +9,7 @@ public class HealthBar : MonoBehaviour
     public float trailSpeed = 1f;
     public Image healthBarActual;
     public Image healthBarTrail;
+    public Image healthBarTrailHeal;
 
     private float healthNormalized;
     private float healthLastCheck = -1;
@@ -16,7 +17,11 @@ public class HealthBar : MonoBehaviour
     private float currentBarFill = 1;
     private float healthTrailStartValue;
     private bool updateBar = false;
+    private bool damaging;
     private float trailTimeRemaining =-1;
+    private float startValueNormalized => healthLastCheck / ownerHealth.health;
+
+    private float endValueNormalized => healthResult / ownerHealth.health;
     // Start is called before the first frame update
     void OnEnable()
     {
@@ -32,7 +37,8 @@ public class HealthBar : MonoBehaviour
     {
         if (updateBar)
         {
-            currentBarFill = UpdateTrail(healthTrailStartValue, endValueNormalized, trailTimeRemaining);
+            Image bar = damaging ? healthBarTrail : healthBarActual;
+            currentBarFill = UpdateTrail(healthTrailStartValue, endValueNormalized, trailTimeRemaining, bar);
             trailTimeRemaining -= Time.deltaTime;
 
             if (trailTimeRemaining <= 0)
@@ -44,19 +50,27 @@ public class HealthBar : MonoBehaviour
         }
     }
 
-    private float startValueNormalized => healthLastCheck / ownerHealth.health;
-
-    private float endValueNormalized => healthResult / ownerHealth.health;
-
     void TakeDamage(HealthChangeStruct healthChange)
     {
-        healthNormalized = (float)ownerHealth.currentHealth / (float)ownerHealth.health;
-        Debug.LogWarning(healthNormalized);
-        healthBarActual.fillAmount = healthNormalized;
+        healthNormalized = (float)healthChange.healthResult / (float)ownerHealth.health;
+        //Debug.LogWarning(healthNormalized);
+        damaging = healthChange.isDamaging;
+
+        if (damaging)
+        {
+            healthBarActual.fillAmount = healthNormalized;
+        }
+
+        if (!damaging)
+        {
+            Debug.Log(healthNormalized);
+        }
+
+        healthBarTrailHeal.fillAmount = healthNormalized;
 
         if (healthLastCheck < 0)
         {
-            healthLastCheck = healthChange.healthAtChange;
+            healthLastCheck = healthChange.healthBeforeChange;
         }
 
         healthResult = healthChange.healthResult;
@@ -65,10 +79,10 @@ public class HealthBar : MonoBehaviour
         updateBar = true;
     }
 
-    float UpdateTrail(float startValue, float endValue, float time)
+    float UpdateTrail(float startValue, float endValue, float time, Image bar)
     {
         float barFill = Mathf.Lerp(endValue, startValue, time);
-        healthBarTrail.fillAmount = barFill;
+        bar.fillAmount = Mathf.Clamp(barFill, 0, 1);
         return barFill;
     }
 }

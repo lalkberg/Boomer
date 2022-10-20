@@ -68,14 +68,15 @@ public class Health : MonoBehaviour
 
 public struct HealthChangeStruct
 {
-    public int healthAtChange;
+    public int healthBeforeChange;
     public int healthResult;
     public int healthDifference;
     public bool lethal;
+    public bool isDamaging => healthDifference >= 0;
 
     public HealthChangeStruct(int current, int difference)
     {
-        healthAtChange = current;
+        healthBeforeChange = current;
         healthDifference = difference;
         healthResult = Mathf.Max(current - difference, 0);
         lethal = healthResult <= 0;
